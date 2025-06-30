@@ -45,7 +45,7 @@ async function scanProject(projectPath: string): Promise<Project | null> {
       const sessionId = file.replace('.jsonl', '');
       
       try {
-        const stats = await stat(filePath);
+        await stat(filePath);
         const messages = await parseJSONLFile(filePath);
         
         if (messages.length === 0) continue;
@@ -58,7 +58,7 @@ async function scanProject(projectPath: string): Promise<Project | null> {
         };
         
         for (const msg of messages) {
-          if (msg.message.usage) {
+          if (msg.message && msg.message.usage) {
             tokenUsage.input += msg.message.usage.input_tokens || 0;
             tokenUsage.output += msg.message.usage.output_tokens || 0;
             tokenUsage.cache += msg.message.usage.cache_read_input_tokens || 0;
@@ -70,7 +70,7 @@ async function scanProject(projectPath: string): Promise<Project | null> {
         
         // Get last activity from the last message
         const lastMessage = messages[messages.length - 1];
-        const messageDate = new Date(lastMessage.timestamp);
+        const messageDate = new Date(lastMessage?.timestamp || new Date().toISOString());
         if (messageDate > lastActivity) {
           lastActivity = messageDate;
         }

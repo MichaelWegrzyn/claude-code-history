@@ -1,6 +1,4 @@
 import { createReadStream } from 'node:fs';
-import { readFile } from 'node:fs/promises';
-import { Readable } from 'node:stream';
 import type { ClaudeMessage } from '@shared/types/conversation.js';
 
 export async function* parseJSONLStream(filePath: string): AsyncGenerator<ClaudeMessage, void, unknown> {
@@ -18,7 +16,12 @@ export async function* parseJSONLStream(filePath: string): AsyncGenerator<Claude
       if (line.trim()) {
         try {
           const data = JSON.parse(line) as ClaudeMessage;
-          yield data;
+          // Validate basic structure
+          if (data && typeof data === 'object' && data.uuid && data.type) {
+            yield data;
+          } else {
+            console.warn(`Skipping malformed message on line ${lineNumber} in ${filePath}`);
+          }
         } catch (error) {
           console.error(`Error parsing line ${lineNumber} in ${filePath}:`, error);
           // Continue parsing other lines
@@ -32,7 +35,12 @@ export async function* parseJSONLStream(filePath: string): AsyncGenerator<Claude
     lineNumber++;
     try {
       const data = JSON.parse(buffer) as ClaudeMessage;
-      yield data;
+      // Validate basic structure
+      if (data && typeof data === 'object' && data.uuid && data.type) {
+        yield data;
+      } else {
+        console.warn(`Skipping malformed final message on line ${lineNumber} in ${filePath}`);
+      }
     } catch (error) {
       console.error(`Error parsing final line ${lineNumber} in ${filePath}:`, error);
     }

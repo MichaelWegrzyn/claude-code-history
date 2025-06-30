@@ -35,31 +35,32 @@ Main Process (Electron)
 
 Renderer Process (React)
 ├── UI Components
-├── State Management (Zustand)
-├── Virtual Scrolling (react-window)
-└── Search (Fuse.js)
+├── State Management (React Query)
+├── Error Boundaries
+└── Toast Notifications
 
-Worker Threads
-├── JSONL Parser Worker
-├── Search Indexer Worker
-└── File Watcher Worker (chokidar)
+Services (Main Process)
+├── JSONL Parser (Streaming)
+├── Conversation Loader
+├── Project Scanner
+└── Summary Generator
 ```
 
 ### Key Dependencies
 ```json
 {
-  "electron": "^28.0.0",
+  "electron": "^37.1.0",
   "react": "^18.2.0",
   "typescript": "^5.3.0",
-  "tailwindcss": "^3.4.0",
+  "tailwindcss": "^4.0.0",
   "@radix-ui/react-*": "^1.0.0",
-  "zustand": "^4.4.0",
-  "chokidar": "^3.5.0",
-  "fuse.js": "^7.0.0",
-  "react-window": "^1.8.0",
-  "vite": "^5.0.0"
+  "@tanstack/react-query": "^5.0.0",
+  "vite": "^7.0.0",
+  "concurrently": "^9.0.0"
 }
 ```
+
+**Note**: Search functionality was removed from MVP to focus on core features.
 
 ## Code Standards & Conventions
 
@@ -400,24 +401,57 @@ module.exports = {
 ```typescript
 class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    logger.error('React error boundary caught:', error, errorInfo);
-    // Send to error tracking service in production
+    console.error('React error boundary caught:', error, errorInfo);
   }
 
   render() {
     if (this.state.hasError) {
-      return <ErrorFallback onReset={this.resetError} />;
+      return (
+        <div className="flex h-full items-center justify-center p-8 bg-gradient-to-br from-red-50 to-red-100">
+          <div className="text-center max-w-md">
+            <h3 className="text-xl font-semibold text-red-800 mb-3">Something went wrong</h3>
+            <p className="text-red-600 leading-relaxed mb-6">
+              An unexpected error occurred. Please try refreshing or contact support.
+            </p>
+            <button onClick={this.handleRetry} className="rounded-lg bg-gradient-to-r from-red-500 to-red-600 px-6 py-2.5 text-sm font-medium text-white hover:from-red-600 hover:to-red-700 transition-all duration-200 transform hover:scale-105">
+              Try Again
+            </button>
+          </div>
+        </div>
+      );
     }
     return this.props.children;
   }
 }
 ```
 
+### Critical Bug Fixes Applied
+
+#### 1. Usage Property Undefined Errors
+**Problem**: `TypeError: Cannot read properties of undefined (reading 'usage')`
+
+**Root Causes & Fixes**:
+- Frontend access: `message.message.usage` → `message.message?.usage?.output_tokens`
+- Token display: `session.tokenUsage.input` → `session.tokenUsage?.input?.toLocaleString() || '0'`
+- Summary generation: Added fallback `const tokenUsage = analysis.tokenUsage || { input: 0, output: 0, cache: 0 }`
+
+#### 2. Navigation Blank Screen Bug
+**Problem**: Empty string `''` treated as valid session ID
+**Fix**: Added proper validation `selectedSessionId && selectedSessionId.trim()`
+
+#### 3. Symbol.iterator Errors
+**Problem**: Unsafe array operations causing iteration errors
+**Fix**: Replaced spread operators with safe for-loops and added array validation
+
 ### Async Error Handling
 ```typescript
-// Always handle errors in async operations
+// Always handle errors in async operations with comprehensive validation
 async function loadConversations(projectPath: string) {
   try {
+    if (!projectPath || typeof projectPath !== 'string') {
+      throw new Error('Invalid project path provided');
+    }
+    
     const files = await readdir(projectPath);
     return Promise.all(
       files
@@ -425,9 +459,42 @@ async function loadConversations(projectPath: string) {
         .map(f => parseJSONLSafely(path.join(projectPath, f)))
     );
   } catch (error) {
-    logger.error('Failed to load conversations:', error);
-    return [];
+    console.error('Failed to load conversations:', error);
+    throw error; // Re-throw to let UI handle with error boundaries
   }
+}
+```
+
+### Message Content Safety
+```typescript
+// Safe message content access with fallbacks
+function MessageContent({ content }: MessageContentProps) {
+  if (!content) {
+    return (
+      <div className="prose prose-sm max-w-none">
+        <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-gray-500 italic">
+          No content available
+        </pre>
+      </div>
+    );
+  }
+
+  if (typeof content === 'string') {
+    return <pre className="whitespace-pre-wrap">{content}</pre>;
+  }
+
+  if (!Array.isArray(content)) {
+    return <pre className="text-gray-500 italic">Invalid content format</pre>;
+  }
+
+  return (
+    <div className="space-y-3">
+      {content.map((item, index) => {
+        if (!item) return null;
+        // Render item safely...
+      })}
+    </div>
+  );
 }
 ```
 
@@ -460,10 +527,12 @@ async function loadConversations(projectPath: string) {
 
 Target metrics:
 - **Startup time:** < 3 seconds
-- **File parsing:** > 1000 messages/second
-- **Search response:** < 100ms for 10k conversations
+- **File parsing:** > 1000 messages/second  
 - **Memory usage:** < 200MB baseline
 - **UI responsiveness:** 60 FPS scrolling
+- **Build time:** < 30 seconds for production
+
+**Note**: Search was removed from MVP to optimize performance and focus on core features.
 
 ## Common Patterns
 
@@ -535,19 +604,24 @@ logger.info('Conversation loaded', {
 ### Important Files
 - `/claude-code-viewer-prd.md` - Product requirements
 - `/src/shared/types/conversation.ts` - Core data types
-- `/src/main/services/parser.ts` - JSONL parser
-- `/src/renderer/stores/conversation.ts` - State management
+- `/src/main/services/jsonlParser.ts` - Streaming JSONL parser
+- `/src/main/services/conversationLoader.ts` - Conversation data loading
+- `/src/main/services/summaryGenerator.ts` - AI-free summary generation
+- `/src/renderer/components/ErrorBoundary.tsx` - Error handling
+- `/PROJECT_LOG.md` - Development progress tracking
 
 ### Performance Checklist
-- [ ] Virtual scrolling for large lists
-- [ ] Debounced search input
-- [ ] Lazy loading for details
-- [ ] Worker threads for heavy operations
-- [ ] Streaming for large files
+- [x] Streaming JSONL parser for large files
+- [x] Lazy loading for conversation details
+- [x] React Query for efficient data fetching
+- [x] Optimized re-renders with proper memoization
+- [x] Error boundaries to prevent crashes
+- [ ] Virtual scrolling for large lists (future enhancement)
 
 ### Security Checklist
-- [ ] Context isolation enabled
-- [ ] Input validation on all paths
-- [ ] No external API calls
-- [ ] Sanitized IPC communication
-- [ ] Secure file access permissions
+- [x] Context isolation enabled
+- [x] Input validation on all IPC calls
+- [x] No external API calls (fully local)
+- [x] Sanitized IPC communication
+- [x] Secure file access permissions
+- [x] No data leaves user's machine

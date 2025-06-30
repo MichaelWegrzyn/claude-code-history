@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { readdir } from 'node:fs/promises';
-import type { ConversationSession, ClaudeMessage } from '@shared/types/conversation.js';
+import type { ConversationSession } from '@shared/types/conversation.js';
 import { parseJSONLFile } from './jsonlParser.js';
 
 export async function loadConversations(projectPath: string): Promise<ConversationSession[]> {
@@ -26,7 +26,7 @@ export async function loadConversations(projectPath: string): Promise<Conversati
         };
         
         for (const msg of messages) {
-          if (msg.message.usage) {
+          if (msg.message && msg.message.usage) {
             tokenUsage.input += msg.message.usage.input_tokens || 0;
             tokenUsage.output += msg.message.usage.output_tokens || 0;
             tokenUsage.cache += msg.message.usage.cache_read_input_tokens || 0;
@@ -34,7 +34,7 @@ export async function loadConversations(projectPath: string): Promise<Conversati
         }
         
         const lastMessage = messages[messages.length - 1];
-        const lastActivity = new Date(lastMessage.timestamp);
+        const lastActivity = new Date(lastMessage?.timestamp || new Date().toISOString());
         
         sessions.push({
           id: sessionId,
@@ -77,7 +77,7 @@ export async function loadConversationDetails(
     };
     
     for (const msg of messages) {
-      if (msg.message.usage) {
+      if (msg.message && msg.message.usage) {
         tokenUsage.input += msg.message.usage.input_tokens || 0;
         tokenUsage.output += msg.message.usage.output_tokens || 0;
         tokenUsage.cache += msg.message.usage.cache_read_input_tokens || 0;
@@ -85,16 +85,23 @@ export async function loadConversationDetails(
     }
     
     const lastMessage = messages[messages.length - 1];
-    const lastActivity = new Date(lastMessage.timestamp);
+    const lastActivity = new Date(lastMessage?.timestamp || new Date().toISOString());
     
+    // Ensure tokenUsage has all required properties
+    const safeTokenUsage = {
+      input: tokenUsage.input || 0,
+      output: tokenUsage.output || 0,
+      cache: tokenUsage.cache || 0,
+    };
+
     return {
       id: sessionId,
       projectPath,
       messages,
       messageCount: messages.length,
       lastActivity,
-      totalTokens: tokenUsage.input + tokenUsage.output,
-      tokenUsage,
+      totalTokens: safeTokenUsage.input + safeTokenUsage.output,
+      tokenUsage: safeTokenUsage,
     };
   } catch (error) {
     console.error(`Error loading conversation details for ${sessionId}:`, error);

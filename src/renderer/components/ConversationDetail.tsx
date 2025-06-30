@@ -1,6 +1,9 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ScrollArea } from './ui/ScrollArea';
-import type { ConversationSession, ClaudeMessage, MessageContent } from '@shared/types/conversation';
+import { SummaryDialog } from './SummaryDialog';
+import { Toast } from './ui/Toast';
+import type { ClaudeMessage, MessageContent } from '@shared/types/conversation';
 import { formatDistanceToNow } from './utils/date';
 
 interface ConversationDetailProps {
@@ -10,6 +13,10 @@ interface ConversationDetailProps {
 }
 
 export function ConversationDetail({ sessionId, projectPath, onClose }: ConversationDetailProps) {
+  const [isSummaryOpen, setIsSummaryOpen] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  
   const { data: session, isLoading } = useQuery({
     queryKey: ['conversation-detail', sessionId, projectPath],
     queryFn: () => window.api.loadConversationDetails(sessionId, projectPath),
@@ -18,10 +25,57 @@ export function ConversationDetail({ sessionId, projectPath, onClose }: Conversa
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <p className="mt-2 text-sm text-muted-foreground">Loading conversation...</p>
+      <div className="flex h-full flex-col">
+        {/* Header skeleton */}
+        <div className="flex items-center justify-between border-b p-4">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 animate-pulse rounded-md bg-muted" />
+            <div className="space-y-2">
+              <div className="h-5 w-48 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <div className="h-8 w-16 animate-pulse rounded-md bg-muted" />
+            <div className="h-8 w-20 animate-pulse rounded-md bg-muted" />
+            <div className="h-9 w-9 animate-pulse rounded-md bg-muted" />
+          </div>
+        </div>
+        
+        {/* Messages skeleton */}
+        <div className="flex-1 overflow-auto p-4">
+          <div className="space-y-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex gap-3">
+                <div className="h-8 w-8 animate-pulse rounded-full bg-muted shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-baseline gap-2">
+                    <div className="h-3 w-16 animate-pulse rounded bg-muted" />
+                    <div className="h-3 w-20 animate-pulse rounded bg-muted" />
+                  </div>
+                  <div className="animate-pulse rounded-lg border p-4">
+                    <div className="space-y-2">
+                      <div className="h-4 w-full bg-muted rounded" />
+                      <div className="h-4 w-3/4 bg-muted rounded" />
+                      <div className="h-4 w-1/2 bg-muted rounded" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Footer skeleton */}
+        <div className="border-t p-4">
+          <div className="flex items-center justify-between">
+            <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+            <div className="flex gap-4">
+              <div className="h-3 w-16 animate-pulse rounded bg-muted" />
+              <div className="h-3 w-20 animate-pulse rounded bg-muted" />
+              <div className="h-3 w-16 animate-pulse rounded bg-muted" />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -41,7 +95,7 @@ export function ConversationDetail({ sessionId, projectPath, onClose }: Conversa
         <div className="flex items-center gap-3">
           <button
             onClick={onClose}
-            className="rounded-md p-2 hover:bg-accent"
+            className="rounded-md p-2 hover:bg-accent transition-colors"
             aria-label="Back to conversations"
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -57,17 +111,25 @@ export function ConversationDetail({ sessionId, projectPath, onClose }: Conversa
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => {
+            onClick={async () => {
               const resumeCommand = `cd "${session.projectPath}" && claude /resume ${session.id}`;
-              window.api.copyToClipboard(resumeCommand);
+              await window.api.copyToClipboard(resumeCommand);
+              setToastMessage('Resume command copied to clipboard!');
+              setShowToast(true);
             }}
-            className="rounded-md bg-primary px-3 py-1 text-sm text-primary-foreground hover:bg-primary/90"
+            className="rounded-md bg-primary px-3 py-1 text-sm text-primary-foreground hover:bg-primary/90 transition-colors"
           >
             Resume
           </button>
           <button
+            onClick={() => setIsSummaryOpen(true)}
+            className="rounded-md border px-3 py-1 text-sm hover:bg-accent transition-colors"
+          >
+            Summary
+          </button>
+          <button
             onClick={onClose}
-            className="rounded-md p-2 hover:bg-accent"
+            className="rounded-md p-2 hover:bg-accent transition-colors"
             aria-label="Close conversation"
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -79,7 +141,7 @@ export function ConversationDetail({ sessionId, projectPath, onClose }: Conversa
       
       <ScrollArea className="flex-1 overflow-auto">
         <div className="space-y-4 p-4">
-          {session.messages.map((message, index) => (
+          {session.messages.map((message) => (
             <MessageDisplay key={message.uuid} message={message} />
           ))}
         </div>
@@ -88,15 +150,28 @@ export function ConversationDetail({ sessionId, projectPath, onClose }: Conversa
       <div className="border-t p-4">
         <div className="flex items-center justify-between text-sm">
           <div>
-            <span className="font-medium">Total tokens:</span> {session.totalTokens.toLocaleString()}
+            <span className="font-medium">Total tokens:</span> {session.totalTokens?.toLocaleString() || '0'}
           </div>
           <div className="flex gap-4 text-xs text-muted-foreground">
-            <span>Input: {session.tokenUsage.input.toLocaleString()}</span>
-            <span>Output: {session.tokenUsage.output.toLocaleString()}</span>
-            <span>Cache: {session.tokenUsage.cache.toLocaleString()}</span>
+            <span>Input: {session.tokenUsage?.input?.toLocaleString() || '0'}</span>
+            <span>Output: {session.tokenUsage?.output?.toLocaleString() || '0'}</span>
+            <span>Cache: {session.tokenUsage?.cache?.toLocaleString() || '0'}</span>
           </div>
         </div>
       </div>
+      
+      <SummaryDialog
+        isOpen={isSummaryOpen}
+        onClose={() => setIsSummaryOpen(false)}
+        sessionId={sessionId}
+        projectPath={projectPath}
+      />
+      
+      <Toast
+        open={showToast}
+        onOpenChange={setShowToast}
+        message={toastMessage}
+      />
     </div>
   );
 }
@@ -119,10 +194,10 @@ function MessageDisplay({ message }: MessageDisplayProps) {
       <div className="flex-1 space-y-2">
         <div className="flex items-baseline gap-2 text-xs text-muted-foreground">
           <span className="font-medium">{isUser ? 'User' : 'Assistant'}</span>
-          <span>{new Date(message.timestamp).toLocaleTimeString()}</span>
-          {message.message.usage && (
+          <span>{new Date(message.timestamp || new Date()).toLocaleTimeString()}</span>
+          {message.message?.usage?.output_tokens && (
             <span className="text-blue-600">
-              {(message.message.usage.output_tokens || 0).toLocaleString()} tokens
+              {message.message.usage.output_tokens.toLocaleString()} tokens
             </span>
           )}
         </div>
@@ -132,7 +207,7 @@ function MessageDisplay({ message }: MessageDisplayProps) {
             ? 'bg-blue-50 border border-blue-200' 
             : 'bg-gray-50 border border-gray-200'
         }`}>
-          <MessageContent content={message.message.content} />
+          <MessageContent content={message.message?.content || 'No content available'} />
         </div>
       </div>
     </div>
@@ -144,6 +219,16 @@ interface MessageContentProps {
 }
 
 function MessageContent({ content }: MessageContentProps) {
+  if (!content) {
+    return (
+      <div className="prose prose-sm max-w-none">
+        <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-gray-500 italic">
+          No content available
+        </pre>
+      </div>
+    );
+  }
+
   if (typeof content === 'string') {
     return (
       <div className="prose prose-sm max-w-none">
@@ -154,9 +239,20 @@ function MessageContent({ content }: MessageContentProps) {
     );
   }
 
+  if (!Array.isArray(content)) {
+    return (
+      <div className="prose prose-sm max-w-none">
+        <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-gray-500 italic">
+          Invalid content format
+        </pre>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       {content.map((item, index) => {
+        if (!item) return null;
         if (item.type === 'text') {
           return (
             <div key={index} className="prose prose-sm max-w-none">
