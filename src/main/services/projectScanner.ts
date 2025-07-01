@@ -38,6 +38,7 @@ async function scanProject(projectPath: string): Promise<Project | null> {
     
     let totalTokens = 0;
     let lastActivity = new Date(0);
+    let actualProjectPath: string | undefined;
     const sessions: ConversationSession[] = [];
     
     for (const file of jsonlFiles) {
@@ -68,6 +69,14 @@ async function scanProject(projectPath: string): Promise<Project | null> {
         const sessionTotalTokens = tokenUsage.input + tokenUsage.output;
         totalTokens += sessionTotalTokens;
         
+        // Extract actual project path from message cwd (use the most recent one)
+        if (!actualProjectPath && messages.length > 0) {
+          const recentMessage = messages[messages.length - 1];
+          if (recentMessage?.cwd) {
+            actualProjectPath = recentMessage.cwd;
+          }
+        }
+        
         // Get last activity from the last message
         const lastMessage = messages[messages.length - 1];
         const messageDate = new Date(lastMessage?.timestamp || new Date().toISOString());
@@ -95,6 +104,7 @@ async function scanProject(projectPath: string): Promise<Project | null> {
     
     return {
       path: projectPath,
+      actualProjectPath,
       name: path.basename(projectPath),
       conversationCount: sessions.length,
       lastActivity,

@@ -5,14 +5,44 @@ import { ConversationDetail } from './ConversationDetail';
 import { SummaryDialog } from './SummaryDialog';
 import { Toast } from './ui/Toast';
 
+// Format project name to be more readable
+function formatProjectName(name: string, actualPath?: string): string {
+  if (actualPath) {
+    const segments = actualPath.split('/').filter(Boolean);
+    const projectName = segments[segments.length - 1];
+    
+    if (!projectName.includes('-')) {
+      return projectName;
+    }
+    
+    if (projectName === 'claude-code-history') {
+      return 'Claude History Viewer';
+    }
+    
+    return projectName
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
+  
+  // Fallback
+  return name.replace(/^-+|-+$/g, '').replace(/-+/g, ' ').trim();
+}
+
 interface ConversationViewerProps {
   projectPath: string | null;
+  selectedProject?: {
+    name: string;
+    actualProjectPath?: string;
+    path: string;
+  } | null;
   selectedSessionId: string | null;
   onSelectSession: (sessionId: string | null) => void;
 }
 
 export function ConversationViewer({ 
-  projectPath, 
+  projectPath,
+  selectedProject,
   selectedSessionId, 
   onSelectSession 
 }: ConversationViewerProps) {
@@ -103,11 +133,14 @@ export function ConversationViewer({
   // Show conversation detail if one is selected
   if (selectedSessionId && selectedSessionId.trim() && projectPath) {
     return (
-      <ConversationDetail
-        sessionId={selectedSessionId}
-        projectPath={projectPath}
-        onClose={() => onSelectSession(null)}
-      />
+      <div className="h-full overflow-hidden">
+        <ConversationDetail
+          sessionId={selectedSessionId}
+          projectPath={projectPath}
+          actualProjectPath={selectedProject?.actualProjectPath}
+          onClose={() => onSelectSession(null)}
+        />
+      </div>
     );
   }
 
@@ -116,7 +149,9 @@ export function ConversationViewer({
       <div className="border-b border-slate-200 p-6 bg-white/50 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-slate-800">Conversations</h2>
+            <h2 className="text-xl font-bold text-slate-800">
+              {selectedProject ? formatProjectName(selectedProject.name, selectedProject.actualProjectPath) : 'Conversations'}
+            </h2>
             <p className="text-sm text-slate-600">
               {sessions.length} conversation{sessions.length !== 1 ? 's' : ''} in this project
             </p>
@@ -150,6 +185,7 @@ export function ConversationViewer({
               <ConversationCard
                 key={session.id}
                 session={session}
+                actualProjectPath={selectedProject?.actualProjectPath}
                 isSelected={selectedSessionId === session.id}
                 onClick={() => onSelectSession(session.id)}
                 onSummary={() => setSummarySessionId(session.id)}
@@ -183,13 +219,14 @@ export function ConversationViewer({
 
 interface ConversationCardProps {
   session: ConversationSession;
+  actualProjectPath?: string;
   isSelected: boolean;
   onClick: () => void;
   onSummary: () => void;
   onCopySuccess: (message: string) => void;
 }
 
-function ConversationCard({ session, isSelected, onClick, onSummary, onCopySuccess }: ConversationCardProps) {
+function ConversationCard({ session, actualProjectPath, isSelected, onClick, onSummary, onCopySuccess }: ConversationCardProps) {
   const formatDate = (date: Date) => {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
@@ -266,7 +303,8 @@ function ConversationCard({ session, isSelected, onClick, onSummary, onCopySucce
           <button
             onClick={async (e) => {
               e.stopPropagation();
-              const resumeCommand = `cd "${session.projectPath}" && claude /resume ${session.id}`;
+              const projectPath = actualProjectPath || session.projectPath;
+              const resumeCommand = `cd "${projectPath}" && claude --resume ${session.id}`;
               await window.api.copyToClipboard(resumeCommand);
               onCopySuccess('Resume command copied to clipboard!');
             }}

@@ -53,7 +53,8 @@ export interface ConversationSession {
 }
 
 export interface Project {
-  path: string;
+  path: string; // Path to conversation directory (.claude/projects/...)
+  actualProjectPath?: string; // Path to actual project directory
   name: string;
   conversationCount: number;
   lastActivity: Date;

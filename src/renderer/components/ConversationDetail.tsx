@@ -9,10 +9,11 @@ import { formatDistanceToNow } from './utils/date';
 interface ConversationDetailProps {
   sessionId: string;
   projectPath: string;
+  actualProjectPath?: string;
   onClose: () => void;
 }
 
-export function ConversationDetail({ sessionId, projectPath, onClose }: ConversationDetailProps) {
+export function ConversationDetail({ sessionId, projectPath, actualProjectPath, onClose }: ConversationDetailProps) {
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -112,7 +113,8 @@ export function ConversationDetail({ sessionId, projectPath, onClose }: Conversa
         <div className="flex gap-2">
           <button
             onClick={async () => {
-              const resumeCommand = `cd "${session.projectPath}" && claude /resume ${session.id}`;
+              const targetPath = actualProjectPath || session.projectPath;
+              const resumeCommand = `cd "${targetPath}" && claude --resume ${session.id}`;
               await window.api.copyToClipboard(resumeCommand);
               setToastMessage('Resume command copied to clipboard!');
               setShowToast(true);
@@ -139,13 +141,13 @@ export function ConversationDetail({ sessionId, projectPath, onClose }: Conversa
         </div>
       </div>
       
-      <ScrollArea className="flex-1 overflow-auto">
-        <div className="space-y-4 p-4">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="space-y-4 p-6 max-w-full">
           {session.messages.map((message) => (
             <MessageDisplay key={message.uuid} message={message} />
           ))}
         </div>
-      </ScrollArea>
+      </div>
 
       <div className="border-t p-4">
         <div className="flex items-center justify-between text-sm">
@@ -184,14 +186,14 @@ function MessageDisplay({ message }: MessageDisplayProps) {
   const isUser = message.type === 'user';
   
   return (
-    <div className={`flex gap-3`}>
+    <div className={`flex gap-3 max-w-full`}>
       <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
         isUser ? 'bg-blue-500 text-white' : 'bg-green-500 text-white'
       }`}>
         {isUser ? 'U' : 'A'}
       </div>
       
-      <div className="flex-1 space-y-2">
+      <div className="flex-1 min-w-0 space-y-2">
         <div className="flex items-baseline gap-2 text-xs text-muted-foreground">
           <span className="font-medium">{isUser ? 'User' : 'Assistant'}</span>
           <span>{new Date(message.timestamp || new Date()).toLocaleTimeString()}</span>
@@ -202,7 +204,7 @@ function MessageDisplay({ message }: MessageDisplayProps) {
           )}
         </div>
         
-        <div className={`rounded-lg p-4 ${
+        <div className={`rounded-lg p-4 overflow-hidden ${
           isUser 
             ? 'bg-blue-50 border border-blue-200' 
             : 'bg-gray-50 border border-gray-200'
@@ -221,31 +223,25 @@ interface MessageContentProps {
 function MessageContent({ content }: MessageContentProps) {
   if (!content) {
     return (
-      <div className="prose prose-sm max-w-none">
-        <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-gray-500 italic">
-          No content available
-        </pre>
-      </div>
+      <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-gray-500 italic">
+        No content available
+      </pre>
     );
   }
 
   if (typeof content === 'string') {
     return (
-      <div className="prose prose-sm max-w-none">
-        <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-gray-800">
-          {content}
-        </pre>
-      </div>
+      <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-gray-800">
+        {content}
+      </pre>
     );
   }
 
   if (!Array.isArray(content)) {
     return (
-      <div className="prose prose-sm max-w-none">
-        <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-gray-500 italic">
-          Invalid content format
-        </pre>
-      </div>
+      <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-gray-500 italic">
+        Invalid content format
+      </pre>
     );
   }
 
@@ -255,11 +251,9 @@ function MessageContent({ content }: MessageContentProps) {
         if (!item) return null;
         if (item.type === 'text') {
           return (
-            <div key={index} className="prose prose-sm max-w-none">
-              <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-gray-800">
-                {item.text}
-              </pre>
-            </div>
+            <pre key={index} className="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-gray-800">
+              {item.text}
+            </pre>
           );
         }
         
@@ -275,7 +269,7 @@ function MessageContent({ content }: MessageContentProps) {
                   <summary className="text-xs text-yellow-700 cursor-pointer hover:text-yellow-900">
                     Show parameters
                   </summary>
-                  <pre className="mt-2 text-xs bg-yellow-100 p-2 rounded overflow-x-auto text-yellow-900">
+                  <pre className="mt-2 text-xs bg-yellow-100 p-2 rounded overflow-x-auto text-yellow-900 max-w-full">
                     {JSON.stringify(item.input, null, 2)}
                   </pre>
                 </details>
@@ -302,7 +296,7 @@ function MessageContent({ content }: MessageContentProps) {
                   Tool Result {isError ? '(Error)' : ''}
                 </span>
               </div>
-              <pre className={`text-xs overflow-x-auto p-2 rounded ${
+              <pre className={`text-xs overflow-x-auto p-2 rounded max-w-full ${
                 isError 
                   ? 'bg-red-100 text-red-900' 
                   : 'bg-green-100 text-green-900'

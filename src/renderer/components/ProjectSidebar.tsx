@@ -1,6 +1,50 @@
 import { useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from './utils/date';
 
+// Format project name to be more readable
+function formatProjectName(path: string, actualPath?: string): string {
+  // If we have the actual project path, use its basename
+  if (actualPath) {
+    const segments = actualPath.split('/').filter(Boolean);
+    const projectName = segments[segments.length - 1];
+    
+    // Don't format if it's already a well-formed name
+    if (!projectName.includes('-')) {
+      return projectName;
+    }
+    
+    // Format the project name nicely (but keep it as-is for this specific project)
+    if (projectName === 'claude-code-history') {
+      return 'Claude History Viewer';
+    }
+    
+    return projectName
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
+  
+  // Extract the last directory name from the encoded path
+  const segments = path.split('/').filter(Boolean);
+  const lastSegment = segments[segments.length - 1];
+  
+  // Remove common prefixes and suffixes
+  let formatted = lastSegment
+    .replace(/^-+|-+$/g, '') // Remove leading/trailing dashes
+    .replace(/^Users-[^-]+-/i, '') // Remove Users-username- prefix
+    .replace(/-+/g, ' ') // Replace dashes with spaces
+    .replace(/_+/g, ' ') // Replace underscores with spaces
+    .replace(/\s+/g, ' ') // Normalize whitespace
+    .trim();
+  
+  // Capitalize first letter of each word
+  formatted = formatted.split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+  
+  return formatted || 'Untitled Project';
+}
+
 interface ProjectSidebarProps {
   selectedProjectPath: string | null;
   onSelectProject: (projectPath: string) => void;
@@ -16,8 +60,8 @@ export function ProjectSidebar({ selectedProjectPath, onSelectProject }: Project
 
   if (error) {
     return (
-      <aside className="w-80 border-r bg-gradient-to-b from-slate-50 to-slate-100/50 backdrop-blur-sm">
-        <div className="p-6 border-b border-slate-200/60">
+      <aside className="w-80 border-r bg-gradient-to-b from-slate-50 to-slate-100/50 backdrop-blur-sm flex flex-col h-full">
+        <div className="p-6 border-b border-slate-200/60 flex-shrink-0">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center">
               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -30,7 +74,7 @@ export function ProjectSidebar({ selectedProjectPath, onSelectProject }: Project
             </div>
           </div>
         </div>
-        <div className="p-6">
+        <div className="p-6 overflow-y-auto flex-1">
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="mb-6 w-16 h-16 rounded-2xl bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center">
               <svg className="h-8 w-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -53,8 +97,8 @@ export function ProjectSidebar({ selectedProjectPath, onSelectProject }: Project
 
   if (isLoading) {
     return (
-      <aside className="w-80 border-r bg-gradient-to-b from-slate-50 to-slate-100/50 backdrop-blur-sm">
-        <div className="p-6 border-b border-slate-200/60">
+      <aside className="w-80 border-r bg-gradient-to-b from-slate-50 to-slate-100/50 backdrop-blur-sm flex flex-col h-full">
+        <div className="p-6 border-b border-slate-200/60 flex-shrink-0">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-300 to-slate-400 animate-pulse" />
             <div>
@@ -63,7 +107,7 @@ export function ProjectSidebar({ selectedProjectPath, onSelectProject }: Project
             </div>
           </div>
         </div>
-        <div className="p-6">
+        <div className="p-6 overflow-y-auto flex-1">
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
               <div key={i} className="animate-pulse rounded-xl border border-slate-200 p-4 bg-white">
@@ -84,8 +128,8 @@ export function ProjectSidebar({ selectedProjectPath, onSelectProject }: Project
   }
 
   return (
-    <aside className="w-80 border-r bg-gradient-to-b from-slate-50 to-slate-100/50 backdrop-blur-sm">
-      <div className="p-6 border-b border-slate-200/60">
+    <aside className="w-80 border-r bg-gradient-to-b from-slate-50 to-slate-100/50 backdrop-blur-sm flex flex-col h-full">
+      <div className="p-6 border-b border-slate-200/60 flex-shrink-0">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,7 +143,7 @@ export function ProjectSidebar({ selectedProjectPath, onSelectProject }: Project
         </div>
       </div>
       
-      <div className="p-6">
+      <div className="p-6 overflow-y-auto flex-1">
         {projects.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="mb-6 w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
@@ -118,6 +162,7 @@ export function ProjectSidebar({ selectedProjectPath, onSelectProject }: Project
               <button
                 key={project.path}
                 onClick={() => onSelectProject(project.path)}
+                title={project.actualProjectPath || project.path} // Tooltip showing actual project path
                 className={`w-full group relative overflow-hidden rounded-xl p-4 text-left transition-all duration-200 ${
                   selectedProjectPath === project.path
                     ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 shadow-md transform scale-[1.02]'
@@ -129,7 +174,15 @@ export function ProjectSidebar({ selectedProjectPath, onSelectProject }: Project
                     <div className={`font-semibold text-sm truncate ${
                       selectedProjectPath === project.path ? 'text-blue-900' : 'text-slate-800'
                     }`}>
-                      {project.name}
+                      {formatProjectName(project.path, project.actualProjectPath)}
+                    </div>
+                    <div className={`text-xs mt-1 truncate ${
+                      selectedProjectPath === project.path ? 'text-blue-400' : 'text-slate-400'
+                    }`}>
+                      {project.actualProjectPath 
+                        ? project.actualProjectPath.replace(/^.*\/Users\/[^\/]+\//, '~/')
+                        : project.path.replace(/^.*\/Users\/[^\/]+\//, '~/')
+                      }
                     </div>
                     <div className="flex items-center gap-3 mt-2">
                       <div className={`flex items-center gap-1 text-xs ${
