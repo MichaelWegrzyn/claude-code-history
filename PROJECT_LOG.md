@@ -88,7 +88,33 @@ This document tracks the development progress, completed tasks, known issues, an
 
 ---
 
-## 🎯 Current Status: **MVP COMPLETE** 
+## 🚀 Recent Updates (January 1, 2025)
+
+### ✅ Project Display & Resume Functionality Improvements
+- **Enhanced Project Path Extraction** - Now extracts actual project directories from conversation metadata
+- **Dynamic Content Headers** - Content section headers now show project names instead of generic "Conversations"
+- **Fixed Resume Commands** - Resume functionality now uses correct project directories and `--resume` syntax
+- **Improved Project Name Formatting** - Better handling of project names in both sidebar and content headers
+- **Updated Application Icon** - Changed to AI-themed sparkle icon for better branding
+- **Component Architecture Enhancement** - Better data flow from App → ConversationViewer → ConversationDetail
+
+### 🔧 Technical Details
+- Added `actualProjectPath` field to Project type and extraction logic
+- Updated ConversationViewer to accept and display selected project information
+- Fixed resume command generation in both ConversationCard and ConversationDetail components
+- Enhanced project name formatting functions across components
+- Maintained backwards compatibility with existing conversation data
+
+### 🐛 Critical Fixes Applied
+- **Resume Directory Bug** ⚠️ → ✅
+  - **Problem**: Resume commands used conversation storage paths instead of actual project paths
+  - **Root Cause**: Components using `session.projectPath` (storage) instead of actual project location
+  - **Fix**: Extract and pass `actualProjectPath` through component hierarchy
+  - **Impact**: Resume functionality now works correctly
+
+---
+
+## 🎯 Current Status: **MVP COMPLETE & ENHANCED** 
 
 ### ✅ All Core Requirements Met
 - Project discovery and browsing

@@ -443,6 +443,12 @@ class ErrorBoundary extends Component<Props, State> {
 **Problem**: Unsafe array operations causing iteration errors
 **Fix**: Replaced spread operators with safe for-loops and added array validation
 
+#### 4. Resume Directory Bug (January 2025)
+**Problem**: Resume commands using conversation storage paths instead of actual project paths
+**Root Cause**: Components accessing `session.projectPath` (storage location) instead of actual project directory
+**Fix**: Extract `actualProjectPath` from message metadata and pass through component hierarchy
+**Implementation**: Added `actualProjectPath` to Project type, extracted from `message.cwd` in projectScanner, passed to ConversationViewer → ConversationCard/ConversationDetail
+
 ### Async Error Handling
 ```typescript
 // Always handle errors in async operations with comprehensive validation
@@ -609,6 +615,12 @@ logger.info('Conversation loaded', {
 - `/src/main/services/summaryGenerator.ts` - AI-free summary generation
 - `/src/renderer/components/ErrorBoundary.tsx` - Error handling
 - `/PROJECT_LOG.md` - Development progress tracking
+
+### Key Implementation Notes
+- **Resume Command Syntax**: Use `claude --resume session-id` (not `/resume`)
+- **Project Path Resolution**: Always use `actualProjectPath` when available, fallback to `projectPath`
+- **Component Data Flow**: App → ConversationViewer → ConversationCard/ConversationDetail
+- **Project Name Formatting**: Special handling for `claude-code-history` → `Claude History Viewer`
 
 ### Performance Checklist
 - [x] Streaming JSONL parser for large files
