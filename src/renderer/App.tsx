@@ -4,6 +4,7 @@ import { ProjectSidebar } from './components/ProjectSidebar';
 import { ConversationViewer } from './components/ConversationViewer';
 import { HeaderBar } from './components/HeaderBar';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { ThemeProvider } from './hooks/useTheme';
 
 export default function App() {
   const [selectedProjectPath, setSelectedProjectPath] = useState<string | null>(null);
@@ -32,26 +33,28 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-gradient-to-br from-slate-50 to-slate-100">
-      <HeaderBar />
-      <div className="flex flex-1 overflow-hidden">
-        <ErrorBoundary>
-          <ProjectSidebar 
-            selectedProjectPath={selectedProjectPath}
-            onSelectProject={handleSelectProject}
-          />
-        </ErrorBoundary>
-        <main className="flex-1 overflow-hidden relative">
+    <ThemeProvider>
+      <div className="flex h-screen flex-col bg-background animate-fade-in">
+        <HeaderBar />
+        <div className="flex flex-1 overflow-hidden">
           <ErrorBoundary>
-            <ConversationViewer
-              projectPath={selectedProjectPath}
-              selectedProject={selectedProject}
-              selectedSessionId={selectedSessionId}
-              onSelectSession={handleSelectSession}
+            <ProjectSidebar 
+              selectedProjectPath={selectedProjectPath}
+              onSelectProject={handleSelectProject}
             />
           </ErrorBoundary>
-        </main>
+          <main className="flex-1 overflow-hidden relative">
+            <ErrorBoundary>
+              <ConversationViewer
+                projectPath={selectedProjectPath}
+                selectedProject={selectedProject}
+                selectedSessionId={selectedSessionId}
+                onSelectSession={handleSelectSession}
+              />
+            </ErrorBoundary>
+          </main>
+        </div>
       </div>
-    </div>
+    </ThemeProvider>
   );
 }

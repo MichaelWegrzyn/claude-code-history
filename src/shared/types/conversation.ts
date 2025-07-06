@@ -50,6 +50,7 @@ export interface ConversationSession {
     output: number;
     cache: number;
   };
+  title?: string;
 }
 
 export interface Project {

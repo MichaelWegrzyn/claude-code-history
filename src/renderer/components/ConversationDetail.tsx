@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ScrollArea } from './ui/ScrollArea';
 import { SummaryDialog } from './SummaryDialog';
 import { Toast } from './ui/Toast';
 import type { ClaudeMessage, MessageContent } from '@shared/types/conversation';
@@ -54,7 +53,7 @@ export function ConversationDetail({ sessionId, projectPath, actualProjectPath, 
                     <div className="h-3 w-16 animate-pulse rounded bg-muted" />
                     <div className="h-3 w-20 animate-pulse rounded bg-muted" />
                   </div>
-                  <div className="animate-pulse rounded-lg border p-4">
+                  <div className="animate-pulse rounded-lg border border-border bg-card p-4">
                     <div className="space-y-2">
                       <div className="h-4 w-full bg-muted rounded" />
                       <div className="h-4 w-3/4 bg-muted rounded" />
@@ -92,17 +91,8 @@ export function ConversationDetail({ sessionId, projectPath, actualProjectPath, 
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b p-4">
+      <div className="flex items-center justify-between border-b border-border p-4 bg-card shadow-subtle">
         <div className="flex items-center gap-3">
-          <button
-            onClick={onClose}
-            className="rounded-md p-2 hover:bg-accent transition-colors"
-            aria-label="Back to conversations"
-          >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
           <div>
             <h2 className="text-lg font-semibold">Conversation Details</h2>
             <p className="text-sm text-muted-foreground">
@@ -119,19 +109,19 @@ export function ConversationDetail({ sessionId, projectPath, actualProjectPath, 
               setToastMessage('Resume command copied to clipboard!');
               setShowToast(true);
             }}
-            className="rounded-md bg-primary px-3 py-1 text-sm text-primary-foreground hover:bg-primary/90 transition-colors"
+            className="rounded-md bg-accent px-3 py-2 text-sm font-semibold text-white hover:bg-accent/90 transition-default cursor-pointer"
           >
             Resume
           </button>
           <button
             onClick={() => setIsSummaryOpen(true)}
-            className="rounded-md border px-3 py-1 text-sm hover:bg-accent transition-colors"
+            className="rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted hover:border-muted-foreground/30 hover:shadow-subtle transition-default cursor-pointer"
           >
             Summary
           </button>
           <button
             onClick={onClose}
-            className="rounded-md p-2 hover:bg-accent transition-colors"
+            className="rounded-md p-2 hover:bg-accent transition-colors cursor-pointer"
             aria-label="Close conversation"
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,13 +133,13 @@ export function ConversationDetail({ sessionId, projectPath, actualProjectPath, 
       
       <div className="flex-1 overflow-y-auto overflow-x-hidden">
         <div className="space-y-4 p-6 max-w-full">
-          {session.messages.map((message) => (
-            <MessageDisplay key={message.uuid} message={message} />
+          {session.messages.map((message, index) => (
+            <MessageDisplay key={`${message.uuid}-${index}`} message={message} />
           ))}
         </div>
       </div>
 
-      <div className="border-t p-4">
+      <div className="border-t border-border bg-card p-4">
         <div className="flex items-center justify-between text-sm">
           <div>
             <span className="font-medium">Total tokens:</span> {session.totalTokens?.toLocaleString() || '0'}
@@ -183,7 +173,11 @@ interface MessageDisplayProps {
 }
 
 function MessageDisplay({ message }: MessageDisplayProps) {
-  const isUser = message.type === 'user';
+  // Determine if this is a user message
+  // Tool results should always be considered assistant messages
+  const hasToolResults = Array.isArray(message.message?.content) && 
+    message.message.content.some(item => item?.type === 'tool_result');
+  const isUser = message.type === 'user' && !hasToolResults;
   
   return (
     <div className={`flex gap-3 max-w-full`}>
@@ -206,8 +200,8 @@ function MessageDisplay({ message }: MessageDisplayProps) {
         
         <div className={`rounded-lg p-4 overflow-hidden ${
           isUser 
-            ? 'bg-blue-50 border border-blue-200' 
-            : 'bg-gray-50 border border-gray-200'
+            ? 'bg-blue-50/50 border border-border' 
+            : 'bg-muted/50 border border-border'
         }`}>
           <MessageContent content={message.message?.content || 'No content available'} />
         </div>
@@ -259,7 +253,7 @@ function MessageContent({ content }: MessageContentProps) {
         
         if (item.type === 'tool_use') {
           return (
-            <div key={index} className="rounded-md bg-yellow-50 border border-yellow-200 p-3">
+            <div key={index} className="rounded-md bg-yellow-50/50 border border-border p-3">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
                 <span className="text-sm font-medium text-yellow-800">Tool: {item.name}</span>
@@ -283,8 +277,8 @@ function MessageContent({ content }: MessageContentProps) {
           return (
             <div key={index} className={`rounded-md p-3 ${
               isError 
-                ? 'bg-red-50 border border-red-200' 
-                : 'bg-green-50 border border-green-200'
+                ? 'bg-red-50/50 border border-border' 
+                : 'bg-green-50/50 border border-border'
             }`}>
               <div className="flex items-center gap-2 mb-2">
                 <div className={`w-2 h-2 rounded-full ${

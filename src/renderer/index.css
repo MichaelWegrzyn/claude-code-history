@@ -1,32 +1,152 @@
 @import "tailwindcss";
 
 @theme {
+  /* Light mode colors - inspired by Claude/ChatGPT */
   --color-primary: #1e293b;
   --color-secondary: #64748b;
-  --color-accent: #3b82f6;
+  --color-accent: #2563eb;
   --color-background: #ffffff;
-  --color-foreground: #0f172a;
-  --color-muted: #f1f5f9;
-  --color-muted-foreground: #64748b;
-  --color-border: #e2e8f0;
-  --color-input: #e2e8f0;
+  --color-foreground: #1f2937;
+  --color-muted: #f9fafb;
+  --color-muted-foreground: #6b7280;
+  --color-border: #e5e7eb;
+  --color-input: #f3f4f6;
   --color-destructive: #ef4444;
+  --color-card: #ffffff;
+  --color-sidebar: #fafbfc;
   
+  /* Minimal radius values */
   --radius-sm: 0.125rem;
   --radius: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
+  
+  /* Simple transitions */
+  --transition-default: all 0.15s ease;
 }
 
+/* Light mode (default) */
+:root {
+  color-scheme: light;
+}
+
+/* Dark mode - inspired by Claude/ChatGPT */
 .dark {
-  --color-background: #0f172a;
-  --color-foreground: #f8fafc;
-  --color-muted: #1e293b;
-  --color-muted-foreground: #94a3b8;
-  --color-border: #334155;
-  --color-input: #334155;
+  color-scheme: dark;
+  --color-background: #111827;
+  --color-foreground: #f9fafb;
+  --color-muted: #1f2937;
+  --color-muted-foreground: #9ca3af;
+  --color-border: #374151;
+  --color-input: #374151;
+  --color-accent: #3b82f6;
+  --color-card: #1a202c;
+  --color-sidebar: #0f172a;
+}
+
+/* Global styles */
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   @apply bg-background text-foreground;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* Custom scrollbar - minimal style */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/30 rounded;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/50;
+}
+
+/* Minimal utility classes */
+.transition-default {
+  transition: var(--transition-default);
+}
+
+/* Focus styles */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-background;
+}
+
+/* Minimal animations - only what's necessary */
+.animate-fade-in {
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Simple hover states */
+.hover-bg-light:hover {
+  @apply bg-muted;
+}
+
+.hover-bg-dark:hover {
+  @apply dark:bg-muted;
+}
+
+/* Text selection */
+::selection {
+  @apply bg-accent/20 text-accent;
+}
+
+/* Depth and shadow utilities */
+.shadow-subtle {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.dark .shadow-subtle {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2), 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+}
+
+.shadow-soft {
+  box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.04), 0 1px 3px 0 rgba(0, 0, 0, 0.08);
+}
+
+.dark .shadow-soft {
+  box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.3), 0 1px 3px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Background variations */
+.bg-sidebar {
+  background-color: var(--color-sidebar);
+}
+
+.bg-card {
+  background-color: var(--color-card);
+}
+
+/* Subtle hover depth */
+.hover-lift {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.08), 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+}
+
+.dark .hover-lift:hover {
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.4), 0 2px 4px 0 rgba(0, 0, 0, 0.3);
 }
