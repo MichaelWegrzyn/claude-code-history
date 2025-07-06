@@ -102,15 +102,20 @@ async function scanProject(projectPath: string): Promise<Project | null> {
       return null;
     }
     
-    return {
+    const result: Project = {
       path: projectPath,
-      actualProjectPath,
       name: path.basename(projectPath),
       conversationCount: sessions.length,
       lastActivity,
       totalTokens,
       sessions: sessions.sort((a, b) => b.lastActivity.getTime() - a.lastActivity.getTime()),
     };
+    
+    if (actualProjectPath) {
+      result.actualProjectPath = actualProjectPath;
+    }
+    
+    return result;
   } catch (error) {
     console.error(`Error scanning project ${projectPath}:`, error);
     return null;

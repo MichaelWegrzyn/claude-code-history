@@ -5,10 +5,11 @@
 Claude Code History Viewer is a desktop application that provides developers with a comprehensive interface to view, analyze, and manage their Claude Code conversation history. This tool addresses the need for developers to track AI-assisted development sessions, understand usage patterns, and seamlessly continue previous conversations.
 
 **Core Features:**
-- Browse and search Claude Code conversation history
+- Browse Claude Code conversation history with project search
 - Track token usage and costs
 - Generate conversation summaries
 - Resume previous sessions with one click
+- Custom embedded title bar with native feel
 - Local-first architecture (no data leaves your machine)
 
 **Target Users:** Solo developers using Claude Code for AI-assisted development
@@ -18,11 +19,11 @@ Claude Code History Viewer is a desktop application that provides developers wit
 ## Architecture & Technical Stack
 
 ### Core Technologies
-- **Framework:** Electron 28+ with context isolation
+- **Framework:** Electron 37+ with context isolation and custom title bar
 - **Frontend:** React 18+ with TypeScript 5+
-- **Styling:** Tailwind CSS 3+ with Radix UI components
-- **State Management:** Zustand 4+ with persistence
-- **Build Tool:** Vite 5+ for fast development
+- **Styling:** Tailwind CSS 4+ with custom design system
+- **State Management:** React Query with client-side state
+- **Build Tool:** Vite 7+ for fast development
 - **Package Manager:** pnpm for efficient dependency management
 
 ### Process Architecture
@@ -30,14 +31,16 @@ Claude Code History Viewer is a desktop application that provides developers wit
 Main Process (Electron)
 ├── File System Operations (Node.js fs/promises)
 ├── IPC Communication (contextBridge)
-├── Window Management
+├── Window Management (Custom Title Bar)
+├── Window Controls (Minimize/Maximize/Close)
 └── Auto-updater
 
 Renderer Process (React)
-├── UI Components
+├── UI Components (HeaderBar, ProjectSidebar, etc.)
 ├── State Management (React Query)
 ├── Error Boundaries
-└── Toast Notifications
+├── Toast Notifications
+└── Project Search Filtering
 
 Services (Main Process)
 ├── JSONL Parser (Streaming)
@@ -60,7 +63,7 @@ Services (Main Process)
 }
 ```
 
-**Note**: Search functionality was removed from MVP to focus on core features.
+**Note**: Conversation content search was removed from MVP to focus on core features. Simple project name search was later added for improved navigation.
 
 ## Code Standards & Conventions
 
@@ -360,6 +363,10 @@ pnpm build
 
 # Package for distribution
 pnpm package
+
+# Generate application icons (run once)
+node scripts/generate-icons.js
+node scripts/create-ico.js
 ```
 
 ### Electron Builder Configuration
@@ -578,6 +585,39 @@ ipcMain.handle('load-conversations', async (event, projectPath) => {
 });
 ```
 
+### Window Controls Pattern
+```typescript
+// main/ipc/window.ts - Window control handlers
+ipcMain.handle('window-minimize', () => {
+  const window = BrowserWindow.getFocusedWindow();
+  if (window) window.minimize();
+});
+
+ipcMain.handle('window-maximize', () => {
+  const window = BrowserWindow.getFocusedWindow();
+  if (window) {
+    if (window.isMaximized()) {
+      window.unmaximize();
+    } else {
+      window.maximize();
+    }
+  }
+});
+
+// renderer/components/HeaderBar.tsx - Platform-specific UI
+const handleMinimize = () => window.api.windowMinimize();
+const isMac = platform.startsWith('Mac');
+
+// Only show custom controls on Windows/Linux
+{!isMac && (
+  <div className="flex items-center gap-1">
+    <button onClick={handleMinimize}>Minimize</button>
+    <button onClick={handleMaximize}>Maximize</button>
+    <button onClick={handleClose}>Close</button>
+  </div>
+)}
+```
+
 ## Debugging
 
 ### Development Tools
@@ -613,7 +653,10 @@ logger.info('Conversation loaded', {
 - `/src/main/services/jsonlParser.ts` - Streaming JSONL parser
 - `/src/main/services/conversationLoader.ts` - Conversation data loading
 - `/src/main/services/summaryGenerator.ts` - AI-free summary generation
+- `/src/main/ipc/window.ts` - Window control handlers
 - `/src/renderer/components/ErrorBoundary.tsx` - Error handling
+- `/src/renderer/components/HeaderBar.tsx` - Custom title bar implementation
+- `/src/renderer/components/ProjectSidebar.tsx` - Project list with search
 - `/PROJECT_LOG.md` - Development progress tracking
 
 ### Key Implementation Notes
@@ -621,6 +664,9 @@ logger.info('Conversation loaded', {
 - **Project Path Resolution**: Always use `actualProjectPath` when available, fallback to `projectPath`
 - **Component Data Flow**: App → ConversationViewer → ConversationCard/ConversationDetail
 - **Project Name Formatting**: Special handling for `claude-code-history` → `Claude History Viewer`
+- **Custom Title Bar**: macOS uses `titleBarStyle: 'hiddenInset'`, Windows/Linux use `titleBarStyle: 'hidden'`
+- **Window Controls**: Only shown on Windows/Linux, macOS uses native traffic light buttons
+- **Project Search**: Client-side filtering with `useMemo` for real-time search results
 
 ### Performance Checklist
 - [x] Streaming JSONL parser for large files
@@ -637,3 +683,43 @@ logger.info('Conversation loaded', {
 - [x] Sanitized IPC communication
 - [x] Secure file access permissions
 - [x] No data leaves user's machine
+
+## Release Preparation
+
+### Production Build Process
+```bash
+# Verify everything is working
+pnpm typecheck    # TypeScript compilation
+pnpm lint         # Code quality check
+pnpm build        # Production build + packaging
+
+# Generated artifacts
+ls release/       # DMG and ZIP files ready for distribution
+```
+
+### Release Readiness Checklist
+- [x] **TypeScript compilation** - Zero errors, strict mode enabled
+- [x] **Code quality** - ESLint configured and passing
+- [x] **Application icons** - Professional icons for all platforms (.icns, .ico, .png)
+- [x] **Package metadata** - Author, repository, version properly set
+- [x] **Build automation** - Reliable build process with electron-builder
+- [x] **Error handling** - Production-ready error boundaries and validation
+- [x] **Performance** - Memory-efficient streaming JSONL parser
+- [x] **Security** - Context isolation, local-first architecture
+
+### Known Issues (Non-blocking)
+- 10 ESLint warnings (TypeScript `any` usage, acceptable for v0.1.0)
+- Code signing certificates not configured (users will see security warning)
+- macOS entitlements file missing (not required for basic distribution)
+
+### Generated Scripts
+- `scripts/generate-icons.js` - Creates platform-specific icons from SVG
+- `scripts/create-ico.js` - Generates Windows ICO file
+- `scripts/build-main.js` - Main process build automation
+
+### Distribution Ready
+✅ **Status: PRODUCTION READY**
+- Version 0.1.0 successfully builds and packages
+- All critical functionality working
+- Professional UI and user experience
+- Ready for initial release to developers

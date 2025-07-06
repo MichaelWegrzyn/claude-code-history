@@ -1,3 +1,4 @@
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from './utils/date';
 
@@ -102,6 +103,8 @@ interface ProjectSidebarProps {
 }
 
 export function ProjectSidebar({ selectedProjectPath, onSelectProject }: ProjectSidebarProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+  
   const { data: projects = [], isLoading, error, refetch } = useQuery({
     queryKey: ['projects'],
     queryFn: () => window.api.getProjects(),
@@ -109,9 +112,39 @@ export function ProjectSidebar({ selectedProjectPath, onSelectProject }: Project
     staleTime: 30000, // 30 seconds
   });
 
+  // Filter projects based on search query
+  const filteredProjects = useMemo(() => {
+    if (!searchQuery.trim()) return projects;
+    
+    const query = searchQuery.toLowerCase();
+    return projects.filter(project => {
+      const projectName = formatProjectName(project.path, project.actualProjectPath);
+      return projectName.toLowerCase().includes(query);
+    });
+  }, [projects, searchQuery]);
+
   if (error) {
     return (
       <aside className="w-64 border-r border-border bg-sidebar flex flex-col h-full">
+        {/* App Header */}
+        <div className="p-4 border-b border-border flex-shrink-0">
+          <div className="flex items-center gap-3">
+            {/* App Logo */}
+            <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            
+            {/* App Title */}
+            <h1 className="text-lg font-semibold text-foreground">
+              Claude Code History
+            </h1>
+          </div>
+        </div>
+        
+        {/* Projects Section Header */}
         <div className="p-4 border-b border-border flex-shrink-0 bg-card/50">
           <h2 className="text-sm font-semibold text-foreground">Projects</h2>
         </div>
@@ -139,6 +172,25 @@ export function ProjectSidebar({ selectedProjectPath, onSelectProject }: Project
   if (isLoading) {
     return (
       <aside className="w-64 border-r border-border bg-sidebar flex flex-col h-full">
+        {/* App Header */}
+        <div className="p-4 border-b border-border flex-shrink-0">
+          <div className="flex items-center gap-3">
+            {/* App Logo */}
+            <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            
+            {/* App Title */}
+            <h1 className="text-lg font-semibold text-foreground">
+              Claude Code History
+            </h1>
+          </div>
+        </div>
+        
+        {/* Projects Section Header - Loading */}
         <div className="p-4 border-b border-border flex-shrink-0 bg-card/50">
           <div className="h-4 w-16 bg-muted rounded animate-pulse" />
         </div>
@@ -160,28 +212,84 @@ export function ProjectSidebar({ selectedProjectPath, onSelectProject }: Project
 
   return (
     <aside className="w-64 border-r border-border bg-sidebar flex flex-col h-full">
+      {/* App Header */}
+      <div className="p-4 border-b border-border flex-shrink-0">
+        <div className="flex items-center gap-3">
+          {/* App Logo */}
+          <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          
+          {/* App Title */}
+          <h1 className="text-lg font-semibold text-foreground">
+            Claude Code History
+          </h1>
+        </div>
+      </div>
+      
+      {/* Projects Section Header */}
       <div className="p-4 border-b border-border flex-shrink-0 bg-card/50">
-        <h2 className="text-sm font-semibold text-foreground">
+        <h2 className="text-sm font-semibold text-foreground mb-3">
           Projects
         </h2>
+        
+        {/* Search Input */}
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input
+            type="text"
+            placeholder="Search projects..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 text-sm border border-border rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-foreground text-muted-foreground"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
       
       <div className="overflow-y-auto flex-1">
-        {projects.length === 0 ? (
+        {filteredProjects.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center px-4">
             <div className="mb-4 w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
-              <svg className="h-6 w-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-              </svg>
+              {searchQuery ? (
+                <svg className="h-6 w-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              ) : (
+                <svg className="h-6 w-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                </svg>
+              )}
             </div>
-            <h3 className="text-sm font-medium text-foreground mb-1">No projects found</h3>
+            <h3 className="text-sm font-medium text-foreground mb-1">
+              {searchQuery ? 'No matching projects' : 'No projects found'}
+            </h3>
             <p className="text-xs text-muted-foreground max-w-xs">
-              Start using Claude Code in a project to see it here.
+              {searchQuery 
+                ? `No projects match "${searchQuery}". Try a different search term.`
+                : 'Start using Claude Code in a project to see it here.'
+              }
             </p>
           </div>
         ) : (
           <div className="p-2">
-            {projects.map((project) => (
+            {filteredProjects.map((project) => (
               <ProjectItem
                 key={project.path}
                 project={project}

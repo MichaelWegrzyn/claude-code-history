@@ -94,15 +94,18 @@ export async function loadConversations(projectPath: string): Promise<Conversati
             }
             
             const trimmedContent = content?.trim();
-            if (trimmedContent && isValidTitleContent(content)) {
+            if (trimmedContent && isValidTitleContent(trimmedContent)) {
+              // trimmedContent is guaranteed to be string here due to the if condition
+              const validContent: string = trimmedContent;
+              
               // Clean up the content for use as title
-              const cleanTitle = trimmedContent
-                .split('\n')[0] // Take first line only
+              const firstLine = validContent.split('\n')[0] || validContent;
+              const cleanTitle = firstLine
                 .slice(0, 60) // Limit length
                 .trim();
               
               title = cleanTitle;
-              if (trimmedContent.length > 60) {
+              if (validContent.length > 60) {
                 title += '...';
               }
               break; // Use the first valid message found
@@ -204,15 +207,18 @@ export async function loadConversationDetails(
         }
         
         const trimmedContent = content?.trim();
-        if (trimmedContent && isValidTitleContent(content)) {
+        if (trimmedContent && isValidTitleContent(trimmedContent)) {
+          // trimmedContent is guaranteed to be string here due to the if condition
+          const validContent: string = trimmedContent;
+          
           // Clean up the content for use as title
-          const cleanTitle = trimmedContent
-            .split('\n')[0] // Take first line only
+          const firstLine = validContent.split('\n')[0] || validContent;
+          const cleanTitle = firstLine
             .slice(0, 60) // Limit length
             .trim();
           
           title = cleanTitle;
-          if (trimmedContent.length > 60) {
+          if (validContent.length > 60) {
             title += '...';
           }
           break; // Use the first valid message found

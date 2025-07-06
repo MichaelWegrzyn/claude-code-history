@@ -28,4 +28,18 @@ contextBridge.exposeInMainWorld('api', {
   // Summary generation
   generateSummary: (conversationId: string, projectPath: string) =>
     ipcRenderer.invoke('generate-summary', conversationId, projectPath),
+  
+  // Window controls
+  windowMinimize: () => ipcRenderer.invoke('window-minimize'),
+  windowMaximize: () => ipcRenderer.invoke('window-maximize'),
+  windowClose: () => ipcRenderer.invoke('window-close'),
+  windowIsMaximized: () => ipcRenderer.invoke('window-is-maximized'),
+  
+  // Window state listeners
+  onWindowMaximizedChanged: (callback: (isMaximized: boolean) => void) => {
+    ipcRenderer.on('window-maximized-changed', (_event, isMaximized) => callback(isMaximized));
+  },
+  setupWindowListeners: () => {
+    ipcRenderer.send('setup-window-listeners');
+  },
 });

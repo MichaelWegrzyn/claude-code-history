@@ -35,11 +35,11 @@ function formatProjectName(name: string, actualPath?: string): string {
 
 interface ConversationViewerProps {
   projectPath: string | null;
-  selectedProject?: {
+  selectedProject: {
     name: string;
     actualProjectPath?: string;
     path: string;
-  } | null;
+  } | null | undefined;
   selectedSessionId: string | null;
   onSelectSession: (sessionId: string | null) => void;
 }
@@ -232,7 +232,7 @@ export function ConversationViewer({
 
 interface ConversationCardProps {
   session: ConversationSession;
-  actualProjectPath?: string;
+  actualProjectPath: string | undefined;
   isSelected: boolean;
   onClick: () => void;
   onSummary: () => void;

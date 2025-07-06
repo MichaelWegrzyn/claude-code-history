@@ -20,6 +20,15 @@ async function createWindow() {
     },
     backgroundColor: '#ffffff',
     show: false,
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden',
+    frame: process.platform !== 'darwin',
+    ...(process.platform === 'win32' && {
+      titleBarOverlay: {
+        color: '#ffffff',
+        symbolColor: '#000000',
+        height: 56
+      }
+    }),
   });
 
   mainWindow.once('ready-to-show', () => {
@@ -61,3 +70,4 @@ app.on('activate', () => {
 import './ipc/conversations.js';
 import './ipc/projects.js';
 import './ipc/clipboard.js';
+import './ipc/window.js';

@@ -74,21 +74,48 @@ This document tracks the development progress, completed tasks, known issues, an
 
 ## 🚫 Features Removed from MVP
 
-### Search Functionality
+### Conversation Search Functionality
 - **Reason**: Complexity and performance concerns identified during development
 - **User Feedback**: "Its not working to great. Im not getting relevant results"
 - **Decision**: "Lets put search on hold... there is alot that needs to be thought about on this. Which is outside the scope of MVP"
 - **Impact**: Simplified codebase, improved performance, faster development
 
 **Removed Components:**
-- Search service with Fuse.js
-- Search UI components
-- Search store and state management
-- Virtual scrolling (dependency of search)
+- Search service with Fuse.js for conversation content search
+- Complex search UI components with faceted filtering
+- Search store and state management for conversation indexing
+- Virtual scrolling (dependency of conversation search)
+
+**Note**: Simple project name search was later re-added (January 6, 2025) as it's lightweight and provides immediate value without the complexity of full conversation content search.
 
 ---
 
-## 🚀 Recent Updates (January 1, 2025)
+## 🚀 Recent Updates (January 6, 2025)
+
+### ✅ Custom Title Bar & UI Enhancement
+- **Embedded Title Bar** - Implemented custom frameless window with embedded title bar like Claude Desktop
+- **Platform-Specific Controls** - macOS uses native traffic lights, Windows/Linux show custom controls
+- **Drag Region Implementation** - Entire header bar is draggable for window movement
+- **Window Control Integration** - Minimize, maximize/restore, and close functionality via IPC
+- **UI Layout Restructuring** - Moved app logo and title from header to sidebar for cleaner design
+- **Project Search Feature** - Added real-time search for project names with clear functionality
+
+### 🔧 Technical Implementation Details
+- **Window Configuration**: Updated BrowserWindow to use `titleBarStyle: 'hiddenInset'` on macOS, `hidden` on Windows/Linux
+- **IPC Communication**: Created `window.ts` IPC handlers for window controls (minimize, maximize, close)
+- **Type Safety**: Added window control methods to global type definitions
+- **Component Architecture**: Enhanced HeaderBar with platform detection and window state management
+- **Search Logic**: Implemented `useMemo` filtering with case-insensitive project name matching
+
+### 🎨 UI/UX Improvements
+- **Minimal Header Design** - Header now contains only theme toggle and window controls
+- **Sidebar App Identity** - Logo and app title prominently displayed in sidebar
+- **Smart Search States** - Different empty states for "no projects" vs "no search results"
+- **Responsive Layout** - Platform-specific spacing and alignment for optimal experience
+
+---
+
+## 🚀 Previous Updates (January 1, 2025)
 
 ### ✅ Project Display & Resume Functionality Improvements
 - **Enhanced Project Path Extraction** - Now extracts actual project directories from conversation metadata
@@ -112,9 +139,75 @@ This document tracks the development progress, completed tasks, known issues, an
   - **Fix**: Extract and pass `actualProjectPath` through component hierarchy
   - **Impact**: Resume functionality now works correctly
 
+- **JSONL Parser Malformed Messages** ⚠️ → ✅
+  - **Problem**: Parser throwing "malformed message" warnings for legitimate Claude Code records
+  - **Root Cause**: Parser too strict - rejected summary (`leafUuid`) and system (`content`) records
+  - **Fix**: Updated validation to recognize all record types, filter non-conversation records
+  - **Impact**: Clean console output, no false warnings
+
+### 🚀 Release Preparation (January 6, 2025)
+**Status: PRODUCTION READY** ✅
+
+#### Critical Release Blockers Fixed
+1. **TypeScript Compilation Errors** → ✅ RESOLVED
+   - Fixed `exactOptionalPropertyTypes` issues with `actualProjectPath` handling
+   - Resolved `titleBarOverlay` type conflicts in main window configuration
+   - Fixed array access safety issues in conversation title generation
+   - Added proper type assertions for complex conditional logic
+
+2. **Application Icons Generated** → ✅ COMPLETE
+   - Created professional icon set from existing SVG design
+   - Generated platform-specific formats: `.icns` (macOS), `.ico` (Windows), `.png` (Linux)
+   - Automated generation with Sharp and to-ico libraries
+   - Icons properly sized: 16px-1024px for all platforms
+
+3. **Package Metadata Updated** → ✅ COMPLETE
+   - Updated author from "Your Name" to "Michael Wegrzyn"
+   - Fixed repository URL to actual GitHub location
+   - Maintained professional package.json structure
+
+4. **ESLint Configuration** → ✅ WORKING
+   - Created modern `eslint.config.js` compatible with ESLint v9+
+   - Configured for TypeScript, React, and Node.js environments
+   - Added proper globals for browser and Node.js contexts
+   - Currently showing 10 warnings (acceptable for release)
+
+#### Build Verification
+- ✅ **TypeScript**: `pnpm typecheck` passes with no errors
+- ✅ **Linting**: `pnpm lint` passes (10 warnings, 0 errors)
+- ✅ **Production Build**: `pnpm build` successful
+- ✅ **Electron Packaging**: DMG and ZIP artifacts generated
+- ✅ **Release Artifacts**: Ready for distribution
+
+#### Generated Files
+```
+build/
+├── icon.icns     # macOS application icon
+├── icon.ico      # Windows application icon  
+└── icon.png      # Linux application icon (512x512)
+
+release/
+├── Claude Code History Viewer-0.1.0-arm64.dmg
+├── Claude Code History Viewer-0.1.0-arm64-mac.zip
+└── latest-mac.yml
+```
+
+#### Medium Priority Items (Future)
+- [ ] Remove console.log statements from production code
+- [ ] Create macOS entitlements file for App Store submission
+- [ ] Add code signing certificates
+- [ ] Implement comprehensive test suite
+
 ---
 
-## 🎯 Current Status: **MVP COMPLETE & ENHANCED** 
+## 🎯 Current Status: **PRODUCTION READY** 🚀
+
+### ✅ Release-Ready MVP
+- **Version**: 0.1.0
+- **Build Status**: ✅ PASSING (TypeScript, ESLint, Production Build)
+- **Distribution**: ✅ READY (DMG/ZIP artifacts generated)
+- **Icons**: ✅ PROFESSIONAL (All platform formats)
+- **Metadata**: ✅ COMPLETE (Author, repository, licensing)
 
 ### ✅ All Core Requirements Met
 - Project discovery and browsing
@@ -125,12 +218,16 @@ This document tracks the development progress, completed tasks, known issues, an
 - Robust error handling
 - Secure, local-first architecture
 
-### 📊 Technical Metrics Achieved
-- **Build Success**: ✅ Clean TypeScript compilation
+### 📊 Production Readiness Metrics
+- **TypeScript Compilation**: ✅ ZERO ERRORS
+- **Code Quality**: ✅ ESLint passing (10 warnings acceptable)
+- **Build Process**: ✅ Automated and reliable
+- **Release Artifacts**: ✅ Platform-specific packages ready
 - **Performance**: ✅ Fast startup and smooth interactions
 - **Memory Usage**: ✅ Efficient streaming prevents memory issues
 - **Error Handling**: ✅ Comprehensive error boundaries and validation
 - **User Experience**: ✅ Professional design with smooth animations
+- **Security**: ✅ Context isolation, no external API calls, local-first
 
 ---
 
@@ -250,6 +347,6 @@ This document tracks the development progress, completed tasks, known issues, an
 
 ---
 
-*Last Updated: December 30, 2024*  
-*Status: MVP Complete ✅*  
+*Last Updated: January 6, 2025*  
+*Status: MVP Complete + Enhanced ✅*  
 *Next Milestone: User Testing & Feedback*

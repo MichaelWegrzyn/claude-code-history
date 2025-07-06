@@ -22,6 +22,16 @@ declare global {
       
       // Summary generation
       generateSummary: (conversationId: string, projectPath: string) => Promise<ConversationSummary>;
+      
+      // Window controls
+      windowMinimize: () => Promise<void>;
+      windowMaximize: () => Promise<void>;
+      windowClose: () => Promise<void>;
+      windowIsMaximized: () => Promise<boolean>;
+      
+      // Window state listeners
+      onWindowMaximizedChanged: (callback: (isMaximized: boolean) => void) => void;
+      setupWindowListeners: () => void;
     };
   }
 }

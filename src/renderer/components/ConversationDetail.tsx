@@ -8,7 +8,7 @@ import { formatDistanceToNow } from './utils/date';
 interface ConversationDetailProps {
   sessionId: string;
   projectPath: string;
-  actualProjectPath?: string;
+  actualProjectPath: string | undefined;
   onClose: () => void;
 }
 
