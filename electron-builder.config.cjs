@@ -11,10 +11,18 @@ module.exports = {
   mac: {
     category: 'public.app-category.developer-tools',
     icon: 'build/icon.icns',
-    hardenedRuntime: true,
+    hardenedRuntime: false,
     gatekeeperAssess: false,
-    entitlements: 'build/entitlements.mac.plist',
-    entitlementsInherit: 'build/entitlements.mac.plist',
+    target: [
+      {
+        target: 'dmg',
+        arch: ['arm64', 'x64']
+      },
+      {
+        target: 'zip',
+        arch: ['arm64', 'x64']
+      }
+    ]
   },
   dmg: {
     contents: [
