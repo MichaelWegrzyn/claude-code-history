@@ -5,7 +5,8 @@ node_modules/
 # Build outputs
 dist/
 release/
-build/
+build/icon.iconset/
+build/icon-*.png
 *.log
 
 # IDE

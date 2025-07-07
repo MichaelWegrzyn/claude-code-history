@@ -1,5 +1,32 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" fill="#1e293b" rx="20"/>
-  <path d="M30 30h40v10H30zM30 45h40v10H30zM30 60h25v10H30z" fill="#3b82f6"/>
-  <circle cx="70" cy="65" r="8" fill="#10b981"/>
+  <!-- Background with gradient -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e40af;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Rounded background -->
+  <rect width="100" height="100" fill="url(#bg)" rx="20"/>
+  
+  <!-- Chat bubble 1 (User) -->
+  <path d="M20 25 L55 25 Q60 25 60 30 L60 35 Q60 40 55 40 L25 40 L20 45 Z" fill="white" opacity="0.9"/>
+  
+  <!-- Chat bubble 2 (AI) -->
+  <path d="M45 50 L80 50 Q85 50 85 55 L85 60 Q85 65 80 65 L75 65 L80 70 L45 70 Q40 70 40 65 L40 55 Q40 50 45 50 Z" fill="url(#accent)"/>
+  
+  <!-- Code/Terminal element -->
+  <rect x="20" y="78" width="60" height="2" fill="white" opacity="0.7" rx="1"/>
+  <rect x="20" y="82" width="45" height="2" fill="white" opacity="0.5" rx="1"/>
+  <rect x="20" y="86" width="35" height="2" fill="white" opacity="0.3" rx="1"/>
+  
+  <!-- Sparkle/AI indicator -->
+  <circle cx="75" cy="35" r="2" fill="url(#accent)"/>
+  <circle cx="72" cy="32" r="1" fill="white" opacity="0.8"/>
+  <circle cx="78" cy="38" r="1" fill="white" opacity="0.6"/>
 </svg>

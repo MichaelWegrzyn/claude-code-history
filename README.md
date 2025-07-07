@@ -18,8 +18,11 @@ A modern desktop application to browse, search, and manage your Claude Code conv
 ## 📦 Download
 
 **Ready-to-use releases:**
-- macOS: Download `Claude Code History Viewer-0.1.0-arm64.dmg` from releases
+- **macOS (Apple Silicon)**: [Download Claude Code History Viewer-0.1.0-arm64.dmg](https://github.com/MichaelWegrzyn/claude-code-history/releases/latest/download/Claude%20Code%20History%20Viewer-0.1.0-arm64.dmg)
+- **macOS (ZIP)**: [Download Claude Code History Viewer-0.1.0-arm64-mac.zip](https://github.com/MichaelWegrzyn/claude-code-history/releases/latest/download/Claude%20Code%20History%20Viewer-0.1.0-arm64-mac.zip)
 - Windows/Linux: Coming soon
+
+> **Note**: On first launch, macOS may show a security warning since the app isn't code-signed. Right-click the app and select "Open" to bypass this warning.
 
 ## 🎯 Status
 
@@ -95,3 +98,11 @@ src/
 
 ## Contributing
 See CLAUDE.md for development guidelines and standards.
+
+## 🤝 Collaboration
+
+This project was developed through a collaborative effort between:
+- **Michael Wegrzyn** - Project Manager & Vision
+- **Claude (Anthropic)** - Lead Developer & Implementation
+
+A unique partnership combining human creativity and AI engineering expertise to deliver a polished, production-ready desktop application.
